@@ -17,8 +17,8 @@ func New(
 	tokenTTL time.Duration,
 ) *App {
 	// TODO: инициализировать хранилище (storage)
-
-	grpcApp := grpcapp.New(log, grpcPort)
+	// Пока оставил заглушку в виде nil, но надо добавить сервисный слой
+	grpcApp := grpcapp.New(log, nil, grpcPort)
 
 	return &App{
 		GRPCSrv: grpcApp,
