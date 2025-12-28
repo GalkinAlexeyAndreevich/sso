@@ -2,9 +2,12 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"sso/internal/domain/models"
+	"sso/internal/lib/jwt"
+	"sso/internal/services/storage"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -53,7 +56,44 @@ func New(
 }
 
 func (a *Auth) Login(ctx context.Context, email string, password string, appID int) (string, error) {
-	panic("implement me")
+	const op = "auth.Login"
+
+	log := a.log.With(
+		slog.String("op", op),
+		slog.String("email", email),
+	)
+
+	log.Info("attermting to login user")
+	user, err := a.userProvider.User(ctx, email)
+	if err != nil {
+		if errors.Is(err, storage.ErrUserNotFound) {
+			log.Error("user not found", slog.Any("err", err))
+			return "", fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
+		}
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	if err := bcrypt.CompareHashAndPassword(user.PassHash, []byte(password)); err != nil {
+		log.Error("invalid password", slog.Any("err", err))
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	app, err := a.apiProvider.App(ctx, appID)
+	if err != nil {
+		if errors.Is(err, storage.ErrAppNotFound) {
+			log.Error("app not found", slog.Any("err", err))
+			return "", fmt.Errorf("%s: %w", op, storage.ErrAppNotFound)
+		}
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	token, err := jwt.NewToken(user, app, a.tokenTTL)
+	if err != nil {
+		log.Error("failed to create token", slog.Any("err", err))
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	return token, nil
 }
 
 func (a *Auth) RegisterNewUser(ctx context.Context, email string, password string) (int64, error) {
@@ -66,6 +106,10 @@ func (a *Auth) RegisterNewUser(ctx context.Context, email string, password strin
 
 	id, err := a.userSaver.SaveUser(ctx, email, passHash)
 	if err != nil {
+		if errors.Is(err, storage.ErrUserExists) {
+			slog.Error("user already exists", slog.Any("err", err))
+			return 0, fmt.Errorf("%s: %w", op, storage.ErrUserExists)
+		}
 		slog.Error("failed to save user", slog.Any("err", err))
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
@@ -73,5 +117,15 @@ func (a *Auth) RegisterNewUser(ctx context.Context, email string, password strin
 }
 
 func (a *Auth) IsAdmin(ctx context.Context, userID int64) (bool, error) {
-	panic("implement me")
+	const op = "auth.IsAdmin"
+
+	isAdmin, err := a.userProvider.IsAdmin(ctx, userID)
+	if err != nil {
+		if errors.Is(err, storage.ErrUserNotFound) {
+			slog.Error("user not found", slog.Any("err", err))
+			return false, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
+		}
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+	return isAdmin, nil
 }
