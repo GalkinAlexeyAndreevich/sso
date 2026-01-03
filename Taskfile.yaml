@@ -1,0 +1,11 @@
+# See: https://taskfile.dev/api/
+
+version: "3"
+
+tasks:
+  migrate:
+    aliases:
+      - migrate
+    desc: "Apply migrations"
+    cmds:
+      - go run cmd/migrator/main.go -storage-path ./storage/sso.db -migrations-path ./migrations -migrations-table migrations
