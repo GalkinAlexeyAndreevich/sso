@@ -21,6 +21,10 @@ type Auth struct {
 	tokenTTL     time.Duration
 }
 
+var (
+	ErrInvalidCredentials = errors.New("invalid credentials")
+)
+
 type UserSaver interface {
 	SaveUser(
 		ctx context.Context,
@@ -75,7 +79,7 @@ func (a *Auth) Login(ctx context.Context, email string, password string, appID i
 
 	if err := bcrypt.CompareHashAndPassword(user.PassHash, []byte(password)); err != nil {
 		log.Error("invalid password", slog.Any("err", err))
-		return "", fmt.Errorf("%s: %w", op, err)
+		return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 	}
 
 	app, err := a.apiProvider.App(ctx, appID)
