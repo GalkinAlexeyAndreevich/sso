@@ -9,3 +9,9 @@ tasks:
     desc: "Apply migrations"
     cmds:
       - go run cmd/migrator/main.go -storage-path ./storage/sso.db -migrations-path ./migrations -migrations-table migrations
+  start:
+    aliases:
+      - start
+    desc: "Start the application"
+    cmds:
+      - go run cmd/sso/main.go -config ./config/local.yaml
