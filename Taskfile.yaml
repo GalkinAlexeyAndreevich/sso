@@ -25,6 +25,6 @@ tasks:
   test:
     aliases:
       - test
-    desc: "Run all tests"
+    desc: "Run all tests (without cache)"
     cmds:
-      - go test -v ./tests/...
+      - go test -v -count=1 ./tests/...

@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"fmt"
 	"sso/tests/suite"
 	"testing"
 	"time"
@@ -11,6 +10,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -43,7 +44,6 @@ func TestRegisterAndLogin(t *testing.T) {
 	require.NoError(t, err)
 
 	token := respLogin.GetToken()
-	fmt.Printf("token: %s\n", token)
 	require.NotEmpty(t, token)
 
 	loginTime := time.Now()
@@ -62,7 +62,32 @@ func TestRegisterAndLogin(t *testing.T) {
 
 	const deltaSeconds = 5
 	assert.InDelta(t, loginTime.Add(st.Cfg.TokenTTL).Unix(), claims["exp"].(float64), deltaSeconds)
+}
 
+func TestDuplicateRegister(t *testing.T) {
+	ctx, st := suite.New(t)
+
+	email := gofakeit.Email()
+	password := randomFakePassword()
+
+	respReg, err := st.AuthClient.Register(ctx, &ssov1.RegisterRequest{
+		Email:    email,
+		Password: password,
+	})
+	require.NoError(t, err)
+	assert.NotEmpty(t, respReg.GetUserId())
+
+	respReg, err = st.AuthClient.Register(ctx, &ssov1.RegisterRequest{
+		Email:    email,
+		Password: password,
+	})
+	require.Error(t, err)
+	assert.Empty(t, respReg.GetUserId())
+
+	grpcStatus, ok := status.FromError(err)
+	require.True(t, ok, "error should be a gRPC status error")
+	assert.Equal(t, codes.AlreadyExists, grpcStatus.Code())
+	assert.Contains(t, grpcStatus.Message(), "user already exists")
 }
 
 func randomFakePassword() string {
