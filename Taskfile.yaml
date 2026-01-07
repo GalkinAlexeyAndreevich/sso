@@ -14,4 +14,4 @@ tasks:
       - start
     desc: "Start the application"
     cmds:
-      - go run cmd/sso/main.go -config ./config/local.yaml
+      - go run cmd/sso/main.go -config ./config/config.yaml
