@@ -15,3 +15,16 @@ tasks:
     desc: "Start the application"
     cmds:
       - go run cmd/sso/main.go -config ./config/config.yaml
+  
+  test-migrate:
+    aliases:
+      - test-migrate
+    desc: "Run migrations for tests"
+    cmds:
+      - go run cmd/migrator/main.go -storage-path ./storage/sso.db -migrations-path ./tests/migrations -migrations-table migrations_tests
+  test:
+    aliases:
+      - test
+    desc: "Run all tests"
+    cmds:
+      - go test -v ./tests/...
