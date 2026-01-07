@@ -91,15 +91,15 @@ func (s *serverAPI) IsAdmin(ctx context.Context, req *ssov1.IsAdminRequest) (*ss
 
 func validateLogin(req *ssov1.LoginRequest) error {
 	if req.GetEmail() == "" {
-		return status.Error(codes.InvalidArgument, "email is empty")
+		return status.Error(codes.InvalidArgument, "email is required")
 	}
 
 	if req.GetPassword() == "" {
-		return status.Error(codes.InvalidArgument, "password is empty")
+		return status.Error(codes.InvalidArgument, "password is required")
 	}
 
 	if req.GetAppId() == 0 {
-		return status.Error(codes.InvalidArgument, "app_id is empty")
+		return status.Error(codes.InvalidArgument, "app_id is required")
 	}
 
 	return nil
@@ -107,18 +107,18 @@ func validateLogin(req *ssov1.LoginRequest) error {
 
 func validateRegister(req *ssov1.RegisterRequest) error {
 	if req.GetEmail() == "" {
-		return status.Error(codes.InvalidArgument, "email is empty")
+		return status.Error(codes.InvalidArgument, "email is required")
 	}
 
 	if req.GetPassword() == "" {
-		return status.Error(codes.InvalidArgument, "password is empty")
+		return status.Error(codes.InvalidArgument, "password is required")
 	}
 	return nil
 }
 
 func validateIsAdmin(req *ssov1.IsAdminRequest) error {
 	if req.GetUserId() == 0 {
-		return status.Error(codes.InvalidArgument, "user_id is empty")
+		return status.Error(codes.InvalidArgument, "user_id is required")
 	}
 	return nil
 }
