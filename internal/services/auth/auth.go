@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"sso/internal/domain/models"
 	"sso/internal/lib/jwt"
-	"sso/internal/services/storage"
+	"sso/internal/storage"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -23,6 +23,9 @@ type Auth struct {
 
 var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrUserExists         = errors.New("user already exists")
+	ErrUserNotFound       = errors.New("user not found")
+	ErrAppNotFound        = errors.New("app not found")
 )
 
 type UserSaver interface {
@@ -72,7 +75,7 @@ func (a *Auth) Login(ctx context.Context, email string, password string, appID i
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
 			log.Error("user not found", slog.Any("err", err))
-			return "", fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
+			return "", fmt.Errorf("%s: %w", op, ErrUserNotFound)
 		}
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
@@ -86,7 +89,7 @@ func (a *Auth) Login(ctx context.Context, email string, password string, appID i
 	if err != nil {
 		if errors.Is(err, storage.ErrAppNotFound) {
 			log.Error("app not found", slog.Any("err", err))
-			return "", fmt.Errorf("%s: %w", op, storage.ErrAppNotFound)
+			return "", fmt.Errorf("%s: %w", op, ErrAppNotFound)
 		}
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
@@ -112,7 +115,7 @@ func (a *Auth) RegisterNewUser(ctx context.Context, email string, password strin
 	if err != nil {
 		if errors.Is(err, storage.ErrUserExists) {
 			slog.Error("user already exists", slog.Any("err", err))
-			return 0, fmt.Errorf("%s: %w", op, storage.ErrUserExists)
+			return 0, fmt.Errorf("%s: %w", op, ErrUserExists)
 		}
 		slog.Error("failed to save user", slog.Any("err", err))
 		return 0, fmt.Errorf("%s: %w", op, err)
@@ -127,7 +130,7 @@ func (a *Auth) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
 			slog.Error("user not found", slog.Any("err", err))
-			return false, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
+			return false, fmt.Errorf("%s: %w", op, ErrUserNotFound)
 		}
 		return false, fmt.Errorf("%s: %w", op, err)
 	}

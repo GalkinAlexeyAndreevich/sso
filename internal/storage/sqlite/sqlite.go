@@ -19,10 +19,19 @@ type Storage struct {
 func New(storagePath string) (*Storage, error) {
 	const op = "storage.sqlite.New"
 
-	db, err := sql.Open("sqlite", storagePath)
+	db, err := sql.Open("sqlite", storagePath+"?_journal_mode=WAL&_busy_timeout=5000")
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
+
+	if _, err := db.Exec("PRAGMA journal_mode=WAL"); err != nil {
+		return nil, fmt.Errorf("%s: failed to enable WAL mode: %w", op, err)
+	}
+
+	if _, err := db.Exec("PRAGMA busy_timeout=5000"); err != nil {
+		return nil, fmt.Errorf("%s: failed to set busy timeout: %w", op, err)
+	}
+
 	return &Storage{db: db}, nil
 }
 
