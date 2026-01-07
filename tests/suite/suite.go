@@ -25,7 +25,7 @@ const (
 
 func New(t *testing.T) (context.Context, *Suite) {
 	t.Helper()
-	t.Parallel()
+	// t.Parallel()
 
 	cfg := config.MustLoadByPath("../config/config.yaml")
 
